@@ -497,9 +497,7 @@ def test_all_classifiers_unique_even_if_classifiers_is_duplicated() -> None:
 
 
 def test_extras_in_extras() -> None:
-    poetry = Factory().create_poetry(
-        fixtures_dir / "project_with_extras_in_extras"
-    )
+    poetry = Factory().create_poetry(fixtures_dir / "project_with_extras_in_extras")
 
     package = poetry.package
     requires = package.requires
@@ -518,7 +516,14 @@ def test_extras_in_extras() -> None:
     assert len(extras) == 3
 
     def find(name: str, extras: set[str]) -> Dependency:
-        return next(iter(filter(lambda dep: dep.name == name and dep.extras == frozenset(extras), requires)))
+        return next(
+            iter(
+                filter(
+                    lambda dep: dep.name == name and dep.extras == frozenset(extras),
+                    requires,
+                )
+            )
+        )
 
     transformers = find("transformers", set())
     assert all(transformers not in extra for extra in extras.values())
@@ -527,13 +532,13 @@ def test_extras_in_extras() -> None:
     assert len(transformers.in_extras) == 0
 
     transformers_torch = find("transformers", {"torch", "torch-vision"})
-    assert [transformers_torch] == extras["torch"]
+    assert [transformers_torch] == extras[canonicalize_name("torch")]
     assert transformers_torch.pretty_constraint == "^4.30.2"
     assert len(transformers_torch.extras) == 2
     assert len(transformers_torch.in_extras) == 1
 
     transformers_tensorflow = find("transformers", {"tf"})
-    assert [transformers_tensorflow] == extras["tf"]
+    assert [transformers_tensorflow] == extras[canonicalize_name("tf")]
     assert transformers_tensorflow.pretty_constraint == "^4.30.2"
     assert len(transformers_tensorflow.extras) == 1
     assert len(transformers_tensorflow.in_extras) == 1
@@ -545,7 +550,7 @@ def test_extras_in_extras() -> None:
     assert len(psycopg.in_extras) == 0
 
     psycopg_c = find("psycopg", {"binary", "c"})
-    assert [psycopg_c] == extras["c"]
+    assert [psycopg_c] == extras[canonicalize_name("c")]
     assert psycopg_c.pretty_constraint == "^3.1.9"
     assert len(psycopg_c.extras) == 2
     assert len(psycopg_c.in_extras) == 1

@@ -34,7 +34,9 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-REQUIREMENT_PATTERN = re.compile("([a-zA-Z-_.0-9]+)\\[([a-zA-Z-_.0-9]+(,[a-zA-Z-_.0-9]+)*)\\]")
+REQUIREMENT_PATTERN = re.compile(
+    "([a-zA-Z-_.0-9]+)\\[([a-zA-Z-_.0-9]+(,[a-zA-Z-_.0-9]+)*)\\]"
+)
 
 
 class Factory:
