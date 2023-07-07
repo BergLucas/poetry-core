@@ -494,3 +494,58 @@ def test_all_classifiers_unique_even_if_classifiers_is_duplicated() -> None:
         "Programming Language :: Python :: 3.11",
         "Topic :: Software Development :: Build Tools",
     ]
+
+
+def test_extras_in_extras() -> None:
+    poetry = Factory().create_poetry(
+        fixtures_dir / "project_with_extras_in_extras"
+    )
+
+    package = poetry.package
+    requires = package.requires
+    extras = package.extras
+
+    assert package.name == "extra-package"
+    assert package.version.text == "1.2.3"
+    assert package.description == "Some description."
+    assert package.authors == ["Your Name <you@example.com>"]
+    assert package.license
+    assert package.license.id == "MIT"
+
+    assert package.python_versions == "^3.10"
+
+    assert len(requires) == 5
+    assert len(extras) == 3
+
+    def find(name: str, extras: set[str]) -> Dependency:
+        return next(iter(filter(lambda dep: dep.name == name and dep.extras == frozenset(extras), requires)))
+
+    transformers = find("transformers", set())
+    assert all(transformers not in extra for extra in extras.values())
+    assert transformers.pretty_constraint == "^4.30.2"
+    assert len(transformers.extras) == 0
+    assert len(transformers.in_extras) == 0
+
+    transformers_torch = find("transformers", {"torch", "torch-vision"})
+    assert [transformers_torch] == extras["torch"]
+    assert transformers_torch.pretty_constraint == "^4.30.2"
+    assert len(transformers_torch.extras) == 2
+    assert len(transformers_torch.in_extras) == 1
+
+    transformers_tensorflow = find("transformers", {"tf"})
+    assert [transformers_tensorflow] == extras["tf"]
+    assert transformers_tensorflow.pretty_constraint == "^4.30.2"
+    assert len(transformers_tensorflow.extras) == 1
+    assert len(transformers_tensorflow.in_extras) == 1
+
+    psycopg = find("psycopg", {"binary"})
+    assert all(psycopg not in extra for extra in extras.values())
+    assert psycopg.pretty_constraint == "^3.1.9"
+    assert len(psycopg.extras) == 1
+    assert len(psycopg.in_extras) == 0
+
+    psycopg_c = find("psycopg", {"binary", "c"})
+    assert [psycopg_c] == extras["c"]
+    assert psycopg_c.pretty_constraint == "^3.1.9"
+    assert len(psycopg_c.extras) == 2
+    assert len(psycopg_c.in_extras) == 1
