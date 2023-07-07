@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -32,6 +33,8 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
+
+REQUIREMENT_PATTERN = re.compile("([a-zA-Z-_.0-9]+)\\[([a-zA-Z-_.0-9]+(,[a-zA-Z-_.0-9]+)*)\\]")
 
 
 class Factory:
@@ -174,6 +177,7 @@ class Factory:
                 package=package, group="dev", dependencies=config["dev-dependencies"]
             )
 
+        extra_deps = []
         extras = config.get("extras", {})
         for extra_name, requirements in extras.items():
             extra_name = canonicalize_name(extra_name)
@@ -181,12 +185,27 @@ class Factory:
 
             # Checking for dependency
             for req in requirements:
+                req_match = REQUIREMENT_PATTERN.match(req)
+                if req_match is not None:
+                    req = req_match.group(1)
+                    req_extras = req_match.group(2).split(",")
+                else:
+                    req_extras = []
+
                 req = Dependency(req, "*")
 
                 for dep in package.requires:
-                    if dep.name == req.name:
-                        dep.in_extras.append(extra_name)
-                        package.extras[extra_name].append(dep)
+                    if dep.name != req.name:
+                        continue
+
+                    if req_extras:
+                        dep = dep.with_features((*dep.extras, *req_extras))
+                        extra_deps.append(dep)
+
+                    dep.in_extras.append(extra_name)
+                    package.extras[extra_name].append(dep)
+
+        package.requires.extend(extra_deps)
 
         if "build" in config:
             build = config["build"]
