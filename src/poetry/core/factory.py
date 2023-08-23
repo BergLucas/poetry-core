@@ -11,6 +11,7 @@ from typing import List
 from typing import Union
 from warnings import warn
 
+from packaging.utils import NormalizedName
 from packaging.utils import canonicalize_name
 
 from poetry.core.utils.helpers import combine_unicode
@@ -179,7 +180,9 @@ class Factory:
                 package=package, group="dev", dependencies=config["dev-dependencies"]
             )
 
-        extra_deps = {}
+        extra_deps: dict[
+            tuple[NormalizedName, frozenset[NormalizedName]], Dependency
+        ] = {}
         extras = config.get("extras", {})
         for extra_name, requirements in extras.items():
             extra_name = canonicalize_name(extra_name)
@@ -187,12 +190,14 @@ class Factory:
 
             # Checking for dependency
             for req in requirements:
+                req_extras: list[NormalizedName] = []
                 req_match = REQUIREMENT_PATTERN.match(req.replace(" ", ""))
                 if req_match is not None:
                     req = req_match.group(1)
-                    req_extras = req_match.group(2).split(",")
-                else:
-                    req_extras = []
+                    req_extras.extend(
+                        canonicalize_name(extra)
+                        for extra in req_match.group(2).split(",")
+                    )
 
                 req = Dependency(req, "*")
 
