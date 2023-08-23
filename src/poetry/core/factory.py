@@ -179,7 +179,7 @@ class Factory:
                 package=package, group="dev", dependencies=config["dev-dependencies"]
             )
 
-        extra_deps = []
+        extra_deps = set()
         extras = config.get("extras", {})
         for extra_name, requirements in extras.items():
             extra_name = canonicalize_name(extra_name)
@@ -202,7 +202,7 @@ class Factory:
 
                     if req_extras:
                         dep = dep.with_features((*dep.extras, *req_extras))
-                        extra_deps.append(dep)
+                        extra_deps.add(dep)
 
                     dep.in_extras.append(extra_name)
                     package.extras[extra_name].append(dep)
