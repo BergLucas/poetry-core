@@ -528,29 +528,34 @@ def test_extras_in_extras() -> None:
     transformers = find("transformers", set())
     assert all(transformers not in extra for extra in extras.values())
     assert transformers.pretty_constraint == "^4.30.2"
+    assert not transformers.is_optional()
     assert len(transformers.extras) == 0
     assert len(transformers.in_extras) == 0
 
     transformers_torch = find("transformers", {"torch", "torch-vision"})
     assert [transformers_torch] == extras[canonicalize_name("torch")]
     assert transformers_torch.pretty_constraint == "^4.30.2"
+    assert not transformers_torch.is_optional()
     assert len(transformers_torch.extras) == 2
     assert len(transformers_torch.in_extras) == 1
 
     transformers_tensorflow = find("transformers", {"tf"})
     assert [transformers_tensorflow] == extras[canonicalize_name("tf")]
     assert transformers_tensorflow.pretty_constraint == "^4.30.2"
+    assert not transformers_tensorflow.is_optional()
     assert len(transformers_tensorflow.extras) == 1
     assert len(transformers_tensorflow.in_extras) == 1
 
     psycopg = find("psycopg", {"binary"})
     assert all(psycopg not in extra for extra in extras.values())
     assert psycopg.pretty_constraint == "^3.1.9"
+    assert psycopg.is_optional()
     assert len(psycopg.extras) == 1
     assert len(psycopg.in_extras) == 0
 
     psycopg_c = find("psycopg", {"binary", "c"})
     assert [psycopg_c] == extras[canonicalize_name("c")]
     assert psycopg_c.pretty_constraint == "^3.1.9"
+    assert psycopg_c.is_optional()
     assert len(psycopg_c.extras) == 2
     assert len(psycopg_c.in_extras) == 1
