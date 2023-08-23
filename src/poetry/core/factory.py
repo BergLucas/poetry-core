@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 REQUIREMENT_PATTERN = re.compile(
-    "([a-zA-Z-_.0-9]+)\\[([a-zA-Z-_.0-9]+(,[a-zA-Z-_.0-9]+)*)\\]"
+    " *([a-zA-Z-_.0-9]+) *\\[ *([a-zA-Z-_.0-9]+ *(, *[a-zA-Z-_.0-9]+ *)*)\\] *"
 )
 
 
@@ -187,7 +187,7 @@ class Factory:
 
             # Checking for dependency
             for req in requirements:
-                req_match = REQUIREMENT_PATTERN.match(req)
+                req_match = REQUIREMENT_PATTERN.match(req.replace(" ", ""))
                 if req_match is not None:
                     req = req_match.group(1)
                     req_extras = req_match.group(2).split(",")
